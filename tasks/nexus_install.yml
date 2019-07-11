@@ -430,15 +430,49 @@
   when: nexus_api_head_with_defined_password.status == 200
   no_log: true
 
-- name: Get Jenkins admin password from file.
+- name: Debug Print Nexus Version being installed.
+  debug:
+    msg: nexus_version {{ nexus_version }} and {{ nexus_version is version('3.17', '>=') }}
+
+- name: Get Nexus admin password from file.
   slurp:
-    src: "{{ nexus_admin_password_file }}"
+    src: "{{ nexus_data_dir }}/admin.password"
   register: adminpasswordfile
+  when: nexus_version is version_compare('3.17.0', '>=')
   no_log: true
 
 - name: Set Nexus admin password fact.
   set_fact:
-    nexus_default_admin_password: "{{ adminpasswordfile['stdout'] | default(nexus_default_admin_password) }}"
+    nexus_file_admin_password: "{{ adminpasswordfile['content'] | b64decode }}"
+  when: nexus_version is version_compare('3.17.0', '>=')
+  no_log: true
+
+
+- name: Debug Print Nexus nexus_file_admin_password.
+  debug:
+    msg: nexus_file_admin_password {{ nexus_file_admin_password }}
+  when: nexus_version is version_compare('3.17.0', '>=')
+  no_log: true
+
+- name: Access scripts API endpoint with file admin password
+  uri:
+    url: "{{ nexus_api_scheme }}://{{ nexus_api_hostname }}:{{ nexus_api_port }}\
+      {{ nexus_api_context_path }}{{ nexus_rest_api_endpoint }}"
+    method: 'HEAD'
+    user: 'admin'
+    password: "{{ nexus_file_admin_password }}"
+    force_basic_auth: yes
+    status_code: 200, 401
+    validate_certs: "{{ nexus_api_validate_certs }}"
+  register: nexus_api_head_with_file_password
+  when: (current_nexus_admin_password is not defined) and (nexus_api_head_with_defined_password.status == 401)
+  no_log: true
+
+- name: Register file admin password for next operations
+  set_fact:
+    current_nexus_admin_password: "{{ nexus_file_admin_password }}"
+  when: (nexus_api_head_with_file_password.status | default(false)) == 200
+  no_log: true
 
 - name: Access scripts API endpoint with default admin password
   uri:
@@ -451,7 +485,7 @@
     status_code: 200, 401
     validate_certs: "{{ nexus_api_validate_certs }}"
   register: nexus_api_head_with_default_password
-  when: nexus_api_head_with_defined_password.status == 401
+  when: current_nexus_admin_password is not defined
 
 - name: Register default admin password for next operations
   set_fact:
@@ -536,10 +570,4 @@
         current_nexus_admin_password: "{{ nexus_admin_password }}"
       no_log: true
 
-    - name: Clear generated password file from install (nexus > 3.17)
-      file:
-        path: "{{ nexus_data_dir }}/admin.password"
-        state: absent
-      when: nexus_version is version_compare('3.17.0', '>=')
-
-  when: (nexus_api_head_with_default_password.status | default(false)) == 200
+  when: ((nexus_api_head_with_default_password.status | default(false)) == 200) or ((nexus_api_head_with_file_password.status | default(false)) == 200)

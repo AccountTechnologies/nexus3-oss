@@ -415,6 +415,12 @@ nexus_repos_raw_proxy:
     # maximum_metadata_age: 1440
     # negative_cache_enabled: true
     # negative_cache_ttl: 1440
+  - name: docker-ubuntu
+    remote_url: 'https://download.docker.com/linux/ubuntu'
+    # maximum_component_age: 1440
+    # maximum_metadata_age: 1440
+    # negative_cache_enabled: true
+    # negative_cache_ttl: 1440
 
 nexus_repos_raw_hosted:
   - name: raw-internal
@@ -426,6 +432,7 @@ nexus_repos_raw_group:
     member_repos:
       - raw-internal
       - ubuntu-archive
+      - docker-ubuntu
 
 # Docker support
 _nexus_repos_docker_defaults:

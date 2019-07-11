@@ -6,14 +6,17 @@ import org.sonatype.nexus.security.user.InvalidCredentialsException
 import org.sonatype.nexus.security.user.UserManager
 import org.sonatype.nexus.security.user.UserNotFoundException
 import org.sonatype.nexus.security.user.User
+import org.sonatype.nexus.security.authz.AuthorizationManager
+import org.sonatype.nexus.security.role.Role
+import org.sonatype.nexus.security.role.NoSuchRoleException
 
 List<Map<String, String>> actionDetails = []
 @Field Map scriptResults = [changed: false, error: false]
 scriptResults.put('action_details', actionDetails)
-authManager = security.securitySystem.getAuthorizationManager(UserManager.DEFAULT_SOURCE)
 
 def updateUser(userDef, currentResult) {
     User user = security.securitySystem.getUser(userDef.username)
+    AuthorizationManager authManager = security.securitySystem.getAuthorizationManager(UserManager.DEFAULT_SOURCE)
 
     user.setFirstName(userDef.first_name)
     user.setLastName(userDef.last_name)
@@ -24,7 +27,7 @@ def updateUser(userDef, currentResult) {
         currentResult.put('status', 'updated')
         scriptResults['changed'] = true
     }
-
+    
     Set<RoleIdentifier> existingRoles = user.getRoles()
     Set<RoleIdentifier> definedRoles = []
     userDef.roles.each { roleDef ->
@@ -58,6 +61,7 @@ def addUser(userDef, currentResult) {
         currentResult.put('error_msg', e.toString())
         scriptResults['error'] = true
     }
+    log.info("added user {}", userDef.username)
 }
 
 def deleteUser(userDef, currentResult) {
@@ -73,6 +77,7 @@ def deleteUser(userDef, currentResult) {
         currentResult.put('error_msg', e.toString())
         scriptResults['error'] = true
     }
+    log.info("deleted user {}", userDef.username)
 }
 
 /* Main */
@@ -90,8 +95,10 @@ parsed_args.each { userDef ->
         deleteUser(userDef, currentResult)
     } else {
         try {
+            log.info("location A - updateUser")
             updateUser(userDef, currentResult)
         } catch (UserNotFoundException ignored) {
+            log.info("location B - addUser")
             addUser(userDef, currentResult)
         } catch (Exception e) {
             currentResult.put('status', 'error')
