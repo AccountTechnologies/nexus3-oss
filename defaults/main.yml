@@ -49,8 +49,10 @@ nexus_backup_keep_rotations: 4  # Keep 4 backup rotations by default (current + 
 # Nexus default properties
 nexus_default_port: 8081
 nexus_docker_hosted_port: 9080
-nexus_docker_proxy_port: 9081
-nexus_docker_group_port: 9082
+nexus_docker_group_port: 9081
+nexus_docker_proxy_port: 9084
+nexus_docker_proxy_quay_port: 9082
+nexus_docker_proxy_gcr_port: 9089
 nexus_default_context_path: '/'
 nexus_application_host: '{{ httpd_setup_enable | ternary("127.0.0.1", "0.0.0.0") }}'
 
@@ -421,6 +423,12 @@ nexus_repos_raw_proxy:
     # maximum_metadata_age: 1440
     # negative_cache_enabled: true
     # negative_cache_ttl: 1440
+  - name: kubernetes
+    remote_url: 'http://apt.kubernetes.io/'
+    # maximum_component_age: 1440
+    # maximum_metadata_age: 1440
+    # negative_cache_enabled: true
+    # negative_cache_ttl: 1440
 
 nexus_repos_raw_hosted:
   - name: raw-internal
@@ -433,6 +441,7 @@ nexus_repos_raw_group:
       - raw-internal
       - ubuntu-archive
       - docker-ubuntu
+      - kubernetes
 
 # Docker support
 _nexus_repos_docker_defaults:
@@ -471,6 +480,28 @@ nexus_repos_docker_proxy:
     # negative_cache_enabled: true
     # negative_cache_ttl: 1440
 
+  - name: docker-proxy-quay
+    http_port: "{{ nexus_docker_proxy_quay_port }}"
+    v1_enabled: True
+    index_type: "HUB"
+    remote_url: "https://quay.io"
+    use_nexus_certificates_to_access_index: false
+    # maximum_component_age: 1440
+    # maximum_metadata_age: 1440
+    # negative_cache_enabled: true
+    # negative_cache_ttl: 1440
+
+  - name: docker-proxy-gcr
+    http_port: "{{ nexus_docker_proxy_gcr_port }}"
+    v1_enabled: True
+    index_type: "HUB"
+    remote_url: "https://gcr.io"
+    use_nexus_certificates_to_access_index: false
+    # maximum_component_age: 1440
+    # maximum_metadata_age: 1440
+    # negative_cache_enabled: true
+    # negative_cache_ttl: 1440
+
 nexus_repos_docker_group:
   - name: docker-group
     http_port: "{{ nexus_docker_group_port }}"
@@ -478,6 +509,8 @@ nexus_repos_docker_group:
     member_repos:
       - docker-hosted
       - docker-proxy
+      - docker-proxy-gcr
+      - docker-proxy-quay
 
 # RubyGems support
 _nexus_repos_rubygems_defaults:
