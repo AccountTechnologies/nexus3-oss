@@ -424,7 +424,13 @@ nexus_repos_raw_proxy:
     # negative_cache_enabled: true
     # negative_cache_ttl: 1440
   - name: kubernetes
-    remote_url: 'http://apt.kubernetes.io/'
+    remote_url: 'https://apt.kubernetes.io/'
+    # maximum_component_age: 1440
+    # maximum_metadata_age: 1440
+    # negative_cache_enabled: true
+    # negative_cache_ttl: 1440
+  - name: docker-compose-github
+    remote_url: 'https://github.com/docker/'
     # maximum_component_age: 1440
     # maximum_metadata_age: 1440
     # negative_cache_enabled: true
@@ -442,6 +448,7 @@ nexus_repos_raw_group:
       - ubuntu-archive
       - docker-ubuntu
       - kubernetes
+      - docker-compose-github
 
 # Docker support
 _nexus_repos_docker_defaults:
