@@ -33,6 +33,7 @@
             +
             (nexus_repos_docker_group | map('combine', {"format": "docker", "type": "group"}) | list)
           }}
+    mode: 0644
   notify:
     - httpd-service-reload
     - wait-for-httpd
