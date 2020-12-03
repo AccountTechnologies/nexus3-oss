@@ -34,7 +34,13 @@ nexus_backup_dir: '/var/nexus-backup'
 nexus_backup_dir_create: true  # Shall we create the dir, or do you already have something in place?
 nexus_restore_log: '{{ nexus_backup_dir }}/nexus-restore.log'
 nexus_backup_configure: false  # Shall we configure backup ?
+## For next schedule vars, see related schedule tasks settings
+## https://github.com/ansible-ThoTeam/nexus3-oss/wiki/Scheduled-tasks-configuration#schedule-types-and-related-settings
+nexus_backup_schedule_type: cron
 nexus_backup_cron: "0 0 21 * * ?"  # See cron expression in nexus create task GUI
+# nexus_backup_start_date_time: "yyyy-MM-dd'T'HH:mm:ss"
+# nexus_backup_weekly_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+# nexus_backup_monthly_days: {{ range(1,32) | list + [999] }}
 nexus_backup_rotate: false  # Shall we rotate backups
 nexus_backup_rotate_first: false  # Shall we rotate before making the current backup ?
 nexus_backup_keep_rotations: 4  # Keep 4 backup rotations by default (current + last 3)
@@ -164,6 +170,7 @@ nexus_proxy_exclude_hosts:
   - "127.*"
   - "[::1]"
 
+nexus_config_maven: true
 nexus_config_pypi: false
 nexus_config_docker: false
 nexus_config_raw: false
@@ -174,6 +181,11 @@ nexus_config_nuget: false
 nexus_config_gitlfs: false
 nexus_config_yum: false
 nexus_config_apt: false
+nexus_config_helm: false
+nexus_config_r: false
+nexus_config_p2: false
+nexus_config_conda: false
+nexus_config_go: false
 
 nexus_content_selectors: []
 # example selector item :
@@ -251,6 +263,16 @@ nexus_blob_names:           # Splited blob name list @ blob_vars.yml
   yum:
     blob: 'default'
   apt:
+    blob: 'default'
+  helm:
+    blob: 'default'
+  r:
+    blob: 'default'
+  p2:
+    blob: 'default'
+  conda:
+    blob: 'default'
+  go:
     blob: 'default'
 
 
@@ -738,3 +760,89 @@ nexus_repos_apt_proxy: []
 #   remote_url: http://download.fedoraproject.org/pub/epel/7/x86_64
 #   distribution: jessie
 #   flat: true
+
+# helm support
+# More on how to work with helm repos https://help.sonatype.com/repomanager3/formats/helm-repositories
+_nexus_repos_helm_defaults:
+  blob_store: "{{ nexus_blob_names.helm.blob }}"
+  strict_content_validation: true
+  layout_policy: strict  # strict or permissive
+  write_policy: allow_once  # one of "allow", "allow_once" or "deny"
+  maximum_component_age: 1440  # Nexus gui default. For proxies only
+  maximum_metadata_age: 1440  # Nexus gui default. For proxies only
+  negative_cache_enabled: true  # Nexus gui default. For proxies only
+  negative_cache_ttl: 1440  # Nexus gui default. For proxies only
+
+nexus_repos_helm_hosted: []
+# - name: helm-hosted
+
+nexus_repos_helm_proxy: []
+# - name: helm-proxy
+#   remote_url: https://kubernetes-charts.storage.googleapis.com/
+
+# R support
+_nexus_repos_r_defaults:
+  blob_store: "{{ nexus_blob_names.r.blob }}"
+  strict_content_validation: true
+  version_policy: release  # release, snapshot or mixed
+  layout_policy: strict  # strict or permissive
+  write_policy: allow_once  # one of "allow", "allow_once" or "deny"
+  maximum_component_age: 1440  # Nexus gui default. For proxies only
+  maximum_metadata_age: 1440  # Nexus gui default. For proxies only
+  negative_cache_enabled: true  # Nexus gui default. For proxies only
+  negative_cache_ttl: 1440  # Nexus gui default. For proxies only
+
+nexus_repos_r_proxy: []
+# - name: r-proxy
+#   remote_url: 'https://cran.r-project.org/'
+#   maximum_component_age: 1440
+#   maximum_metadata_age: 1440
+#   negative_cache_enabled: true
+#   negative_cache_ttl: 1440
+
+nexus_repos_r_hosted: []
+# - name: r-internal
+#   version_policy: release
+#   write_policy: allow  # one of "allow", "allow_once" or "deny"
+
+nexus_repos_r_group: []
+# - name: r-all
+#   member_repos:
+#     - r-internal
+#     - r-proxy
+
+# p2 support (available natively from Nexus 3.21.0 version)
+_nexus_repos_p2_defaults:
+  blob_store: "{{ nexus_blob_names.p2.blob }}"
+  strict_content_validation: true
+  maximum_component_age: 1440  # Nexus gui default. For proxies only
+  maximum_metadata_age: 1440  # Nexus gui default. For proxies only
+  negative_cache_enabled: true  # Nexus gui default. For proxies only
+  negative_cache_ttl: 1440  # Nexus gui default. For proxies only
+
+nexus_repos_p2_proxy: []
+
+# conda support
+_nexus_repos_conda_defaults:
+  blob_store: "{{ nexus_blob_names.conda.blob }}"
+  strict_content_validation: true
+  maximum_component_age: 1440  # Nexus gui default. For proxies only
+  maximum_metadata_age: 1440  # Nexus gui default. For proxies only
+  negative_cache_enabled: true  # Nexus gui default. For proxies only
+  negative_cache_ttl: 1440  # Nexus gui default. For proxies only
+
+nexus_repos_conda_proxy: []
+#   - name: conda-proxy
+#     remote_url: 'https://repo.continuum.io/pkgs/'
+
+_nexus_repos_go_defaults:
+  blob_store: "{{ nexus_blob_names.go.blob }}"
+  strict_content_validation: true
+  write_policy: allow_once  # one of "allow", "allow_once" or "deny"
+  maximum_component_age: 1440  # Nexus gui default. For proxies only
+  maximum_metadata_age: 1440  # Nexus gui default. For proxies only
+  negative_cache_enabled: true  # Nexus gui default. For proxies only
+  negative_cache_ttl: 1440  # Nexus gui default. For proxies only
+
+nexus_repos_go_group: []
+nexus_repos_go_proxy: []
